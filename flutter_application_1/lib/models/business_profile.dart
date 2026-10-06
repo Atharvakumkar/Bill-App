@@ -8,8 +8,12 @@ class BusinessProfile {
   String email;
   String upiId;
   String logoPath;
+  String qrCodePath;
+  String signaturePath;
   String defaultPaymentMethod;
   String termsAndConditions;
+  String fssaiNumber;
+  String website;
 
   BusinessProfile({
     this.businessName = '',
@@ -19,8 +23,12 @@ class BusinessProfile {
     this.email = '',
     this.upiId = '',
     this.logoPath = '',
+    this.qrCodePath = '',
+    this.signaturePath = '',
     this.defaultPaymentMethod = 'Cash',
     this.termsAndConditions = 'Thank you for your business!',
+    this.fssaiNumber = '',
+    this.website = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -32,8 +40,12 @@ class BusinessProfile {
       'email': email,
       'upiId': upiId,
       'logoPath': logoPath,
+      'qrCodePath': qrCodePath,
+      'signaturePath': signaturePath,
       'defaultPaymentMethod': defaultPaymentMethod,
       'termsAndConditions': termsAndConditions,
+      'fssaiNumber': fssaiNumber,
+      'website': website,
     };
   }
 
@@ -46,8 +58,12 @@ class BusinessProfile {
       email: map['email'] ?? '',
       upiId: map['upiId'] ?? '',
       logoPath: map['logoPath'] ?? '',
+      qrCodePath: map['qrCodePath'] ?? '',
+      signaturePath: map['signaturePath'] ?? '',
       defaultPaymentMethod: map['defaultPaymentMethod'] ?? 'Cash',
       termsAndConditions: map['termsAndConditions'] ?? 'Thank you for your business!',
+      fssaiNumber: map['fssaiNumber'] ?? '',
+      website: map['website'] ?? '',
     );
   }
 }
@@ -66,3 +82,4 @@ class BusinessProfileAdapter extends TypeAdapter<BusinessProfile> {
     writer.writeMap(obj.toMap());
   }
 }
+

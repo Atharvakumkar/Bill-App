@@ -24,7 +24,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
   // Bill Details
   late TextEditingController _invoiceNoCtrl;
   DateTime _invoiceDate = DateTime.now();
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   String _paymentStatus = 'Unpaid';
   String _paymentMethod = 'Cash';
 
@@ -48,7 +47,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
       final b = widget.existingBill!;
       _invoiceNoCtrl = TextEditingController(text: b.invoiceNumber);
       _invoiceDate = b.invoiceDate;
-      _dueDate = b.dueDate;
       _paymentStatus = b.paymentStatus;
       _paymentMethod = b.paymentMethod;
 
@@ -58,7 +56,7 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
       _customerAddressCtrl.text = b.customer.address;
 
       _items = List.from(b.items);
-      _additionalDiscount = 0; // Not currently separating additional discount in model, kept simple
+      _additionalDiscount = 0;
     } else {
       _invoiceNoCtrl = TextEditingController(text: storageService.getGeneratedInvoiceNumber());
     }
@@ -133,20 +131,16 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, bool isInvoiceDate) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isInvoiceDate ? _invoiceDate : _dueDate,
+      initialDate: _invoiceDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
     if (picked != null) {
       setState(() {
-        if (isInvoiceDate) {
-          _invoiceDate = picked;
-        } else {
-          _dueDate = picked;
-        }
+        _invoiceDate = picked;
       });
     }
   }
@@ -185,7 +179,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
       id: widget.existingBill?.id ?? const Uuid().v4(),
       invoiceNumber: _invoiceNoCtrl.text,
       invoiceDate: _invoiceDate,
-      dueDate: _dueDate,
       customer: Customer(
         name: _customerNameCtrl.text,
         phone: _customerPhoneCtrl.text,
@@ -238,28 +231,12 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                       validator: (val) => val == null || val.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _selectDate(context, true),
-                            child: InputDecorator(
-                              decoration: const InputDecoration(labelText: 'Invoice Date'),
-                              child: Text(DateFormat('dd MMM yyyy').format(_invoiceDate)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _selectDate(context, false),
-                            child: InputDecorator(
-                              decoration: const InputDecoration(labelText: 'Due Date'),
-                              child: Text(DateFormat('dd MMM yyyy').format(_dueDate)),
-                            ),
-                          ),
-                        ),
-                      ],
+                    InkWell(
+                      onTap: () => _selectDate(context),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(labelText: 'Invoice Date'),
+                        child: Text(DateFormat('dd MMM yyyy').format(_invoiceDate)),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -407,3 +384,4 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
     );
   }
 }
+

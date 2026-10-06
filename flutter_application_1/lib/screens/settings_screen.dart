@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../models/business_profile.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -29,6 +31,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _prefixCtrl.dispose();
     _nextNoCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profile.logoPath = pickedFile.path;
+      });
+    }
+  }
+
+  void _removeLogo() {
+    setState(() {
+      _profile.logoPath = '';
+    });
+  }
+
+  Future<void> _pickQrCode() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profile.qrCodePath = pickedFile.path;
+      });
+    }
+  }
+
+  void _removeQrCode() {
+    setState(() {
+      _profile.qrCodePath = '';
+    });
+  }
+
+  Future<void> _pickSignature() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profile.signaturePath = pickedFile.path;
+      });
+    }
+  }
+
+  void _removeSignature() {
+    setState(() {
+      _profile.signaturePath = '';
+    });
   }
 
   void _saveSettings() async {
@@ -58,7 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All data reset.')));
-                // Reload app or just setState
                 setState(() {
                   _profile = BusinessProfile();
                   _prefixCtrl.text = 'INV-';
@@ -94,6 +143,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            border: Border.all(color: Colors.grey[400]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: _profile.logoPath.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(File(_profile.logoPath), fit: BoxFit.cover),
+                                )
+                              : const Center(child: Icon(Icons.store, color: Colors.grey, size: 40)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _pickLogo,
+                                icon: const Icon(Icons.image),
+                                label: const Text('Select Logo'),
+                              ),
+                              if (_profile.logoPath.isNotEmpty)
+                                TextButton(
+                                  onPressed: _removeLogo,
+                                  child: const Text('Remove Logo', style: TextStyle(color: Colors.red)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       initialValue: _profile.businessName,
                       decoration: const InputDecoration(labelText: 'Business Name *'),
@@ -138,10 +225,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onSaved: (val) => _profile.defaultPaymentMethod = val ?? 'Cash',
                     ),
                     TextFormField(
-                      initialValue: _profile.termsAndConditions,
-                      decoration: const InputDecoration(labelText: 'Terms & Conditions'),
-                      maxLines: 3,
-                      onSaved: (val) => _profile.termsAndConditions = val ?? '',
+                      initialValue: _profile.fssaiNumber,
+                      decoration: const InputDecoration(labelText: 'FSSAI Number'),
+                      onSaved: (val) => _profile.fssaiNumber = val ?? '',
+                    ),
+                    TextFormField(
+                      initialValue: _profile.website,
+                      decoration: const InputDecoration(labelText: 'Website'),
+                      onSaved: (val) => _profile.website = val ?? '',
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            border: Border.all(color: Colors.grey[400]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: _profile.qrCodePath.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(File(_profile.qrCodePath), fit: BoxFit.cover),
+                                )
+                              : const Center(child: Icon(Icons.qr_code, color: Colors.grey, size: 40)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _pickQrCode,
+                                icon: const Icon(Icons.qr_code),
+                                label: const Text('Select UPI QR'),
+                              ),
+                              if (_profile.qrCodePath.isNotEmpty)
+                                TextButton(
+                                  onPressed: _removeQrCode,
+                                  child: const Text('Remove UPI QR', style: TextStyle(color: Colors.red)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            border: Border.all(color: Colors.grey[400]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: _profile.signaturePath.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(File(_profile.signaturePath), fit: BoxFit.contain),
+                                )
+                              : const Center(child: Icon(Icons.draw, color: Colors.grey, size: 40)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _pickSignature,
+                                icon: const Icon(Icons.draw),
+                                label: const Text('Select Signature'),
+                              ),
+                              if (_profile.signaturePath.isNotEmpty)
+                                TextButton(
+                                  onPressed: _removeSignature,
+                                  child: const Text('Remove Signature', style: TextStyle(color: Colors.red)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

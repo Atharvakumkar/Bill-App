@@ -6,7 +6,6 @@ class Bill {
   String id;
   String invoiceNumber;
   DateTime invoiceDate;
-  DateTime dueDate;
   Customer customer;
   List<BillItem> items;
   double subtotal;
@@ -22,7 +21,6 @@ class Bill {
     required this.id,
     required this.invoiceNumber,
     required this.invoiceDate,
-    required this.dueDate,
     required this.customer,
     required this.items,
     required this.subtotal,
@@ -40,7 +38,6 @@ class Bill {
       'id': id,
       'invoiceNumber': invoiceNumber,
       'invoiceDate': invoiceDate.toIso8601String(),
-      'dueDate': dueDate.toIso8601String(),
       'customer': customer.toMap(),
       'items': items.map((i) => i.toMap()).toList(),
       'subtotal': subtotal,
@@ -59,7 +56,6 @@ class Bill {
       id: map['id'] ?? '',
       invoiceNumber: map['invoiceNumber'] ?? '',
       invoiceDate: DateTime.tryParse(map['invoiceDate'] ?? '') ?? DateTime.now(),
-      dueDate: DateTime.tryParse(map['dueDate'] ?? '') ?? DateTime.now(),
       customer: Customer.fromMap(map['customer'] ?? {}),
       items: (map['items'] as List?)?.map((i) => BillItem.fromMap(i)).toList() ?? [],
       subtotal: (map['subtotal'] ?? 0).toDouble(),
@@ -88,3 +84,4 @@ class BillAdapter extends TypeAdapter<Bill> {
     writer.writeMap(obj.toMap());
   }
 }
+
