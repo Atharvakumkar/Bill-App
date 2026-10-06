@@ -53,7 +53,7 @@ class PurchaseBill {
       vendor: Vendor.fromMap(map['vendor'] ?? {}),
       items: (map['items'] as List?)?.map((i) => BillItem.fromMap(i)).toList() ?? [],
       totalAmount: (map['totalAmount'] ?? 0).toDouble(),
-      paymentStatus: map['paymentStatus'] ?? 'Unpaid',
+      paymentStatus: map['paymentStatus'] ?? 'Paid',
       paymentMethod: map['paymentMethod'] ?? 'Cash',
       notes: map['notes'] ?? '',
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),

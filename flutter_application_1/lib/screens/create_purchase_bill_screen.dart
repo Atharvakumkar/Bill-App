@@ -26,7 +26,7 @@ class _CreatePurchaseBillScreenState extends State<CreatePurchaseBillScreen> {
   // Bill Details
   late TextEditingController _invoiceNoCtrl;
   DateTime _invoiceDate = DateTime.now();
-  String _paymentStatus = 'Unpaid';
+  String _paymentStatus = 'Paid';
   String _paymentMethod = 'Cash';
 
   // Vendor Details
