@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/bill.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/glass_container.dart';
 import 'create_bill_screen.dart';
 import 'preview_screen.dart';
+import 'create_purchase_bill_screen.dart';
+import '../models/purchase_bill.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({Key? key}) : super(key: key);
@@ -15,6 +18,8 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   List<Bill> _bills = [];
   double _totalAmount = 0;
+  List<PurchaseBill> _purchaseBills = [];
+  double _totalPurchases = 0;
 
   @override
   void initState() {
@@ -26,6 +31,8 @@ class _DashboardViewState extends State<DashboardView> {
     setState(() {
       _bills = storageService.getBills();
       _totalAmount = _bills.fold(0, (sum, bill) => sum + bill.grandTotal);
+      _purchaseBills = storageService.getPurchaseBills();
+      _totalPurchases = _purchaseBills.fold(0, (sum, bill) => sum + bill.totalAmount);
     });
   }
 
@@ -42,20 +49,45 @@ class _DashboardViewState extends State<DashboardView> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ElevatedButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CreateBillScreen()),
-                );
-                _loadData();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('CREATE NEW BILL'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreateBillScreen()),
+                      );
+                      _loadData();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('SALE'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreatePurchaseBillScreen()),
+                      );
+                      _loadData();
+                    },
+                    icon: const Icon(Icons.shopping_cart),
+                    label: const Text('PURCHASE'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             Row(
@@ -65,7 +97,7 @@ class _DashboardViewState extends State<DashboardView> {
                     'Bills Created',
                     _bills.length.toString(),
                     Icons.receipt,
-                    Colors.blue,
+                    Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -74,7 +106,7 @@ class _DashboardViewState extends State<DashboardView> {
                     'Total Amount',
                     CurrencyFormatter.format(_totalAmount),
                     Icons.account_balance_wallet,
-                    Colors.green,
+                    Theme.of(context).colorScheme.secondary,
                   ),
                 ),
               ],
@@ -93,7 +125,14 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
               )
             else
-              ...recentBills.map((bill) => Card(
+              ...recentBills.map((bill) => GlassContainer(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PreviewScreen(bill: bill)),
+                      );
+                    },
                     child: ListTile(
                       title: Text(bill.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(bill.customer.name),
@@ -109,12 +148,6 @@ class _DashboardViewState extends State<DashboardView> {
                                   fontSize: 12)),
                         ],
                       ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => PreviewScreen(bill: bill)),
-                        );
-                      },
                     ),
                   )),
           ],
@@ -124,20 +157,25 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 16),
-            Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-            const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          ],
-        ),
+    return GlassContainer(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7), fontSize: 13)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }

@@ -3,13 +3,17 @@ import '../models/business_profile.dart';
 import '../models/customer.dart';
 import '../models/bill_item.dart';
 import '../models/bill.dart';
+import '../models/vendor.dart';
+import '../models/purchase_bill.dart';
 
 class StorageService {
   static const String _settingsBoxName = 'settings';
   static const String _billsBoxName = 'bills';
+  static const String _purchaseBillsBoxName = 'purchase_bills';
 
   Box? _settingsBox;
   Box<Bill>? _billsBox;
+  Box<PurchaseBill>? _purchaseBillsBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -18,9 +22,12 @@ class StorageService {
     Hive.registerAdapter(CustomerAdapter());
     Hive.registerAdapter(BillItemAdapter());
     Hive.registerAdapter(BillAdapter());
+    Hive.registerAdapter(VendorAdapter());
+    Hive.registerAdapter(PurchaseBillAdapter());
 
     _settingsBox = await Hive.openBox(_settingsBoxName);
     _billsBox = await Hive.openBox<Bill>(_billsBoxName);
+    _purchaseBillsBox = await Hive.openBox<PurchaseBill>(_purchaseBillsBoxName);
   }
 
   // --- Business Profile ---
@@ -80,9 +87,26 @@ class StorageService {
     await _billsBox?.delete(id);
   }
 
+  // --- Purchase Bills ---
+  List<PurchaseBill> getPurchaseBills() {
+    if (_purchaseBillsBox == null) return [];
+    final bills = _purchaseBillsBox!.values.toList();
+    bills.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bills;
+  }
+
+  Future<void> savePurchaseBill(PurchaseBill bill) async {
+    await _purchaseBillsBox?.put(bill.id, bill);
+  }
+
+  Future<void> deletePurchaseBill(String id) async {
+    await _purchaseBillsBox?.delete(id);
+  }
+
   // --- Reset ---
   Future<void> resetAllData() async {
     await _settingsBox?.clear();
     await _billsBox?.clear();
+    await _purchaseBillsBox?.clear();
   }
 }

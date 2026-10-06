@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../main.dart';
-import '../models/bill.dart';
+import '../models/purchase_bill.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/glass_container.dart';
-import 'create_bill_screen.dart';
-import 'preview_screen.dart';
+import 'create_purchase_bill_screen.dart';
+import 'purchase_preview_screen.dart';
 
-class BillHistoryScreen extends StatefulWidget {
-  const BillHistoryScreen({Key? key}) : super(key: key);
+class PurchaseHistoryScreen extends StatefulWidget {
+  const PurchaseHistoryScreen({Key? key}) : super(key: key);
 
   @override
-  State<BillHistoryScreen> createState() => _BillHistoryScreenState();
+  State<PurchaseHistoryScreen> createState() => _PurchaseHistoryScreenState();
 }
 
-class _BillHistoryScreenState extends State<BillHistoryScreen> {
-  List<Bill> _bills = [];
-  List<Bill> _filteredBills = [];
+class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
+  List<PurchaseBill> _bills = [];
+  List<PurchaseBill> _filteredBills = [];
   final _searchCtrl = TextEditingController();
 
   @override
@@ -35,7 +35,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
 
   void _loadBills() {
     setState(() {
-      _bills = storageService.getBills();
+      _bills = storageService.getPurchaseBills();
       _filteredBills = _bills;
     });
   }
@@ -45,12 +45,12 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
     setState(() {
       _filteredBills = _bills.where((bill) {
         return bill.invoiceNumber.toLowerCase().contains(query) ||
-            bill.customer.name.toLowerCase().contains(query);
+            bill.vendor.name.toLowerCase().contains(query);
       }).toList();
     });
   }
 
-  void _deleteBill(Bill bill) {
+  void _deletePurchaseBill(PurchaseBill bill) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -65,7 +65,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await storageService.deleteBill(bill.id);
+              await storageService.deletePurchaseBill(bill.id);
               if (mounted) {
                 Navigator.pop(context);
                 _loadBills();
@@ -78,7 +78,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
     );
   }
 
-  void _showBillOptions(BuildContext context, Bill bill) {
+  void _showBillOptions(BuildContext context, PurchaseBill bill) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -92,7 +92,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => PreviewScreen(bill: bill)),
+                  MaterialPageRoute(builder: (_) => PurchasePreviewScreen(bill: bill)),
                 );
               },
             ),
@@ -104,7 +104,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CreateBillScreen(existingBill: bill),
+                    builder: (_) => CreatePurchaseBillScreen(existingBill: bill),
                   ),
                 );
                 _loadBills();
@@ -115,7 +115,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
               title: const Text('Delete', style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
-                _deleteBill(bill);
+                _deletePurchaseBill(bill);
               },
             ),
           ],
@@ -127,7 +127,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bill History')),
+      appBar: AppBar(title: const Text('Purchase History')),
       body: Column(
         children: [
           Padding(
@@ -142,7 +142,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
           ),
           Expanded(
             child: _filteredBills.isEmpty
-                ? const Center(child: Text('No bills found.'))
+                ? const Center(child: Text('No purchase bills found.'))
                 : ListView.builder(
                     itemCount: _filteredBills.length,
                     itemBuilder: (context, index) {
@@ -156,7 +156,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => PreviewScreen(bill: bill),
+                              builder: (_) => PurchasePreviewScreen(bill: bill),
                             ),
                           );
                         },
@@ -168,7 +168,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(bill.customer.name),
+                              Text(bill.vendor.name),
                               Text(
                                 DateFormat('dd MMM yyyy')
                                     .format(bill.invoiceDate),
@@ -184,7 +184,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    CurrencyFormatter.format(bill.grandTotal),
+                                    CurrencyFormatter.format(bill.totalAmount),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -219,3 +219,5 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
     );
   }
 }
+
+

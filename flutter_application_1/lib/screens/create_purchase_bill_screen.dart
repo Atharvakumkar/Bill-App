@@ -3,24 +3,24 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../main.dart';
-import '../models/bill.dart';
+import '../models/purchase_bill.dart';
 import '../models/bill_item.dart';
-import '../models/customer.dart';
+import '../models/vendor.dart';
 import '../utils/calculations.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/glass_container.dart';
-import 'preview_screen.dart';
+import 'purchase_preview_screen.dart';
 
-class CreateBillScreen extends StatefulWidget {
-  final Bill? existingBill;
+class CreatePurchaseBillScreen extends StatefulWidget {
+  final PurchaseBill? existingBill;
 
-  const CreateBillScreen({Key? key, this.existingBill}) : super(key: key);
+  const CreatePurchaseBillScreen({Key? key, this.existingBill}) : super(key: key);
 
   @override
-  State<CreateBillScreen> createState() => _CreateBillScreenState();
+  State<CreatePurchaseBillScreen> createState() => _CreatePurchaseBillScreenState();
 }
 
-class _CreateBillScreenState extends State<CreateBillScreen> {
+class _CreatePurchaseBillScreenState extends State<CreatePurchaseBillScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Bill Details
@@ -29,15 +29,15 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
   String _paymentStatus = 'Unpaid';
   String _paymentMethod = 'Cash';
 
-  // Customer Details
-  final _customerNameCtrl = TextEditingController();
-  final _customerPhoneCtrl = TextEditingController();
-  final _customerEmailCtrl = TextEditingController();
-  final _customerAddressCtrl = TextEditingController();
+  // Vendor Details
+  final _vendorNameCtrl = TextEditingController();
+  final _vendorPhoneCtrl = TextEditingController();
+  final _vendorEmailCtrl = TextEditingController();
+  final _vendorAddressCtrl = TextEditingController();
 
   // Items
   List<BillItem> _items = [];
-  double _additionalDiscount = 0;
+  
 
   @override
   void initState() {
@@ -52,16 +52,16 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
       _paymentStatus = b.paymentStatus;
       _paymentMethod = b.paymentMethod;
 
-      _customerNameCtrl.text = b.customer.name;
-      _customerPhoneCtrl.text = b.customer.phone;
-      _customerEmailCtrl.text = b.customer.email;
-      _customerAddressCtrl.text = b.customer.address;
+      _vendorNameCtrl.text = b.vendor.name;
+      _vendorPhoneCtrl.text = b.vendor.phone;
+      _vendorEmailCtrl.text = b.vendor.email;
+      _vendorAddressCtrl.text = b.vendor.address;
 
       _items = List.from(b.items);
-      _additionalDiscount = 0;
+      
     } else {
       _invoiceNoCtrl = TextEditingController(
-        text: storageService.getGeneratedInvoiceNumber(),
+        text: '',
       );
     }
   }
@@ -69,10 +69,10 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
   @override
   void dispose() {
     _invoiceNoCtrl.dispose();
-    _customerNameCtrl.dispose();
-    _customerPhoneCtrl.dispose();
-    _customerEmailCtrl.dispose();
-    _customerAddressCtrl.dispose();
+    _vendorNameCtrl.dispose();
+    _vendorPhoneCtrl.dispose();
+    _vendorEmailCtrl.dispose();
+    _vendorAddressCtrl.dispose();
     super.dispose();
   }
 
@@ -151,7 +151,7 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                   item.description = descCtrl.text;
                   item.quantity = double.tryParse(qtyCtrl.text) ?? 1;
                   item.unitPrice = double.tryParse(priceCtrl.text) ?? 0;
-                  item.discount = double.tryParse(discCtrl.text) ?? 0;
+                  item.discount = 0;
                 });
                 Navigator.pop(context);
               },
@@ -192,49 +192,39 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
       return;
     }
 
-    final bill = _buildBillObject();
+    final bill = _buildPurchaseBillObject();
 
     // Check if new and we should increment counter
     if (widget.existingBill == null &&
-        _invoiceNoCtrl.text == storageService.getGeneratedInvoiceNumber()) {
+        _invoiceNoCtrl.text == '') {
       await storageService.incrementInvoiceNumber();
     }
 
-    await storageService.saveBill(bill);
+    await storageService.savePurchaseBill(bill);
 
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => PreviewScreen(bill: bill)),
+        MaterialPageRoute(builder: (_) => PurchasePreviewScreen(bill: bill)),
       );
     }
   }
 
-  Bill _buildBillObject() {
+  PurchaseBill _buildPurchaseBillObject() {
     double subtotal = Calculations.calculateSubtotal(_items);
-    double totalDiscount = Calculations.calculateTotalDiscount(
-      _items,
-      _additionalDiscount,
-    );
-    double grandTotal = Calculations.calculateGrandTotal(
-      _items,
-      _additionalDiscount,
-    );
 
-    return Bill(
+    return PurchaseBill(
       id: widget.existingBill?.id ?? const Uuid().v4(),
       invoiceNumber: _invoiceNoCtrl.text,
       invoiceDate: _invoiceDate,
-      customer: Customer(
-        name: _customerNameCtrl.text,
-        phone: _customerPhoneCtrl.text,
-        email: _customerEmailCtrl.text,
-        address: _customerAddressCtrl.text,
+      vendor: Vendor(
+        name: _vendorNameCtrl.text,
+        phone: _vendorPhoneCtrl.text,
+        email: _vendorEmailCtrl.text,
+        address: _vendorAddressCtrl.text,
       ),
       items: _items,
-      subtotal: subtotal,
-      discount: totalDiscount,
-      grandTotal: grandTotal,
+      totalAmount: subtotal,
       paymentStatus: _paymentStatus,
       paymentMethod: _paymentMethod,
       createdAt: widget.existingBill?.createdAt ?? DateTime.now(),
@@ -245,14 +235,11 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
   @override
   Widget build(BuildContext context) {
     double subtotal = Calculations.calculateSubtotal(_items);
-    double grandTotal = Calculations.calculateGrandTotal(
-      _items,
-      _additionalDiscount,
-    );
+    double grandTotal = subtotal;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingBill == null ? 'Create Bill' : 'Edit Bill'),
+        title: Text(widget.existingBill == null ? 'Create Purchase Bill' : 'Edit Purchase Bill'),
         actions: [
           IconButton(
             icon: const Icon(Icons.remove_red_eye),
@@ -354,9 +341,9 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Customer Details
+            // Vendor Details
             const Text(
-              'Customer Details',
+              'Vendor Details',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -366,28 +353,28 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: _customerNameCtrl,
+                      controller: _vendorNameCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Customer Name *',
+                        labelText: 'Vendor Name *',
                       ),
                       validator: (val) =>
                           val == null || val.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                      controller: _customerPhoneCtrl,
+                      controller: _vendorPhoneCtrl,
                       decoration: const InputDecoration(labelText: 'Phone'),
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                      controller: _customerEmailCtrl,
+                      controller: _vendorEmailCtrl,
                       decoration: const InputDecoration(labelText: 'Email'),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                      controller: _customerAddressCtrl,
+                      controller: _vendorAddressCtrl,
                       decoration: const InputDecoration(labelText: 'Address'),
                       maxLines: 2,
                     ),
@@ -520,3 +507,5 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
     );
   }
 }
+
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard_view.dart';
 import 'bill_history_screen.dart';
+import 'purchase_history_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const DashboardView(),
     const BillHistoryScreen(),
+    const PurchaseHistoryScreen(),
     const SettingsScreen(),
   ];
 
@@ -39,7 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
-            label: 'Bills',
+            label: 'Sales',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart),
+            label: 'Purchases',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

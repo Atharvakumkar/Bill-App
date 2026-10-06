@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
 import '../main.dart';
-import '../models/bill.dart';
-import '../services/pdf_service.dart';
-import 'create_bill_screen.dart';
+import '../models/purchase_bill.dart';
+import '../services/purchase_pdf_service.dart';
+import 'create_purchase_bill_screen.dart';
 
-class PreviewScreen extends StatefulWidget {
-  final Bill bill;
+class PurchasePreviewScreen extends StatefulWidget {
+  final PurchaseBill bill;
 
-  const PreviewScreen({Key? key, required this.bill}) : super(key: key);
+  const PurchasePreviewScreen({Key? key, required this.bill}) : super(key: key);
 
   @override
-  State<PreviewScreen> createState() => _PreviewScreenState();
+  State<PurchasePreviewScreen> createState() => _PurchasePreviewScreenState();
 }
 
-class _PreviewScreenState extends State<PreviewScreen> {
+class _PurchasePreviewScreenState extends State<PurchasePreviewScreen> {
   Uint8List? _pdfBytes;
   bool _isLoading = true;
 
@@ -30,7 +30,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Future<void> _generatePdf() async {
     final profile = storageService.getBusinessProfile();
     try {
-      final bytes = await PdfService.generatePdf(widget.bill, profile);
+      final bytes = await PurchasePdfService.generatePdf(widget.bill, profile);
       setState(() {
         _pdfBytes = bytes;
         _isLoading = false;
@@ -50,7 +50,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bill Preview'),
+        title: const Text('Purchase Bill Preview'),
         actions: [
           if (_pdfBytes != null) ...[
             IconButton(
@@ -60,19 +60,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CreateBillScreen(existingBill: widget.bill),
+                    builder: (_) => CreatePurchaseBillScreen(existingBill: widget.bill),
                   ),
                 );
               },
             ),
             IconButton(
               icon: const Icon(Icons.share),
-              onPressed: () => PdfService.sharePdf(_pdfBytes!, widget.bill),
+              onPressed: () => PurchasePdfService.sharePdf(_pdfBytes!, widget.bill),
               tooltip: 'Share',
             ),
             IconButton(
               icon: const Icon(Icons.print),
-              onPressed: () => PdfService.printPdf(_pdfBytes!),
+              onPressed: () => PurchasePdfService.printPdf(_pdfBytes!),
               tooltip: 'Print',
             ),
           ],
@@ -92,3 +92,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
     );
   }
 }
+
+
+

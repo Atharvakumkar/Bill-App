@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../models/business_profile.dart';
+import '../widgets/glass_container.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -136,209 +137,75 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text('Business Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            border: Border.all(color: Colors.grey[400]!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: _profile.logoPath.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(File(_profile.logoPath), fit: BoxFit.cover),
-                                )
-                              : const Center(child: Icon(Icons.store, color: Colors.grey, size: 40)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _pickLogo,
-                                icon: const Icon(Icons.image),
-                                label: const Text('Select Logo'),
-                              ),
-                              if (_profile.logoPath.isNotEmpty)
-                                TextButton(
-                                  onPressed: _removeLogo,
-                                  child: const Text('Remove Logo', style: TextStyle(color: Colors.red)),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      initialValue: _profile.businessName,
-                      decoration: const InputDecoration(labelText: 'Business Name *'),
-                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-                      onSaved: (val) => _profile.businessName = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.ownerName,
-                      decoration: const InputDecoration(labelText: 'Owner Name'),
-                      onSaved: (val) => _profile.ownerName = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.address,
-                      decoration: const InputDecoration(labelText: 'Business Address'),
-                      maxLines: 2,
-                      onSaved: (val) => _profile.address = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.phone,
-                      decoration: const InputDecoration(labelText: 'Phone Number'),
-                      keyboardType: TextInputType.phone,
-                      onSaved: (val) => _profile.phone = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.email,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      keyboardType: TextInputType.emailAddress,
-                      onSaved: (val) => _profile.email = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.upiId,
-                      decoration: const InputDecoration(labelText: 'UPI ID'),
-                      onSaved: (val) => _profile.upiId = val ?? '',
-                    ),
-                    DropdownButtonFormField<String>(
-                      value: _profile.defaultPaymentMethod,
-                      decoration: const InputDecoration(labelText: 'Default Payment Method'),
-                      items: ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Other']
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                          .toList(),
-                      onChanged: (val) => setState(() => _profile.defaultPaymentMethod = val!),
-                      onSaved: (val) => _profile.defaultPaymentMethod = val ?? 'Cash',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.fssaiNumber,
-                      decoration: const InputDecoration(labelText: 'FSSAI Number'),
-                      onSaved: (val) => _profile.fssaiNumber = val ?? '',
-                    ),
-                    TextFormField(
-                      initialValue: _profile.website,
-                      decoration: const InputDecoration(labelText: 'Website'),
-                      onSaved: (val) => _profile.website = val ?? '',
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            border: Border.all(color: Colors.grey[400]!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: _profile.qrCodePath.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(File(_profile.qrCodePath), fit: BoxFit.cover),
-                                )
-                              : const Center(child: Icon(Icons.qr_code, color: Colors.grey, size: 40)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _pickQrCode,
-                                icon: const Icon(Icons.qr_code),
-                                label: const Text('Select UPI QR'),
-                              ),
-                              if (_profile.qrCodePath.isNotEmpty)
-                                TextButton(
-                                  onPressed: _removeQrCode,
-                                  child: const Text('Remove UPI QR', style: TextStyle(color: Colors.red)),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            border: Border.all(color: Colors.grey[400]!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: _profile.signaturePath.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(File(_profile.signaturePath), fit: BoxFit.contain),
-                                )
-                              : const Center(child: Icon(Icons.draw, color: Colors.grey, size: 40)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _pickSignature,
-                                icon: const Icon(Icons.draw),
-                                label: const Text('Select Signature'),
-                              ),
-                              if (_profile.signaturePath.isNotEmpty)
-                                TextButton(
-                                  onPressed: _removeSignature,
-                                  child: const Text('Remove Signature', style: TextStyle(color: Colors.red)),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            _buildSectionHeader('Business Profile'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildTextField(label: 'Business Name *', initialValue: _profile.businessName, isRequired: true, onSaved: (v) => _profile.businessName = v),
+                  _buildTextField(label: 'Owner Name', initialValue: _profile.ownerName, onSaved: (v) => _profile.ownerName = v),
+                  _buildTextField(label: 'Business Address', initialValue: _profile.address, maxLines: 2, onSaved: (v) => _profile.address = v),
+                  _buildTextField(label: 'Phone Number', initialValue: _profile.phone, keyboardType: TextInputType.phone, onSaved: (v) => _profile.phone = v),
+                  _buildTextField(label: 'Email', initialValue: _profile.email, keyboardType: TextInputType.emailAddress, onSaved: (v) => _profile.email = v),
+                  _buildTextField(label: 'Website', initialValue: _profile.website, onSaved: (v) => _profile.website = v),
+                  _buildTextField(label: 'FSSAI Number', initialValue: _profile.fssaiNumber, onSaved: (v) => _profile.fssaiNumber = v),
+                ],
               ),
             ),
             const SizedBox(height: 24),
-
-            const Text('Invoice Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _prefixCtrl,
-                      decoration: const InputDecoration(labelText: 'Invoice Prefix'),
-                    ),
-                    TextFormField(
-                      controller: _nextNoCtrl,
-                      decoration: const InputDecoration(labelText: 'Next Invoice Number'),
-                      keyboardType: TextInputType.number,
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Required';
-                        if (int.tryParse(val) == null) return 'Must be a number';
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
+            _buildSectionHeader('Payment Settings'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildTextField(label: 'UPI ID', initialValue: _profile.upiId, onSaved: (v) => _profile.upiId = v),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _profile.defaultPaymentMethod,
+                    decoration: const InputDecoration(labelText: 'Default Payment Method'),
+                    items: ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Other'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                    onChanged: (val) => setState(() => _profile.defaultPaymentMethod = val!),
+                    onSaved: (val) => _profile.defaultPaymentMethod = val ?? 'Cash',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Images & Brand'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildImagePickerRow(title: 'Select Logo', path: _profile.logoPath, icon: Icons.store, onPick: _pickLogo, onRemove: _removeLogo),
+                  const Divider(height: 32),
+                  _buildImagePickerRow(title: 'Select UPI QR', path: _profile.qrCodePath, icon: Icons.qr_code, onPick: _pickQrCode, onRemove: _removeQrCode),
+                  const Divider(height: 32),
+                  _buildImagePickerRow(title: 'Select Signature', path: _profile.signaturePath, icon: Icons.draw, onPick: _pickSignature, onRemove: _removeSignature),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Invoice Settings'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _prefixCtrl,
+                    decoration: const InputDecoration(labelText: 'Invoice Prefix'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nextNoCtrl,
+                    decoration: const InputDecoration(labelText: 'Next Invoice Number'),
+                    keyboardType: TextInputType.number,
+                    validator: (val) {
+                      if (val == null || val.isEmpty) return 'Required';
+                      if (int.tryParse(val) == null) return 'Must be a number';
+                      return null;
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 32),
@@ -354,7 +221,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             OutlinedButton(
               onPressed: _resetData,
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 16),
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: const Text('RESET ALL APPLICATION DATA'),
             ),
@@ -362,6 +231,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+      child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String initialValue,
+    required Function(String) onSaved,
+    bool isRequired = false,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        initialValue: initialValue,
+        decoration: InputDecoration(labelText: label),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: isRequired ? (val) => val == null || val.trim().isEmpty ? 'Required' : null : null,
+        onSaved: (val) => onSaved(val ?? ''),
+      ),
+    );
+  }
+
+  Widget _buildImagePickerRow({
+    required String title,
+    required String path,
+    required IconData icon,
+    required VoidCallback onPick,
+    required VoidCallback onRemove,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: path.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(File(path), fit: BoxFit.cover),
+                )
+              : Center(child: Icon(icon, color: Colors.grey, size: 40)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ElevatedButton.icon(
+                onPressed: onPick,
+                icon: Icon(icon, size: 18),
+                label: Text(title),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              if (path.isNotEmpty)
+                TextButton(
+                  onPressed: onRemove,
+                  child: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
