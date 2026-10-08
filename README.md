@@ -1,4 +1,5 @@
-# Bill Maker
+# Invoice-Now
+
 
 A complete offline-first Flutter mobile application for generating simple bills and invoices.
 
