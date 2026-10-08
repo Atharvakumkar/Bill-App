@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/business_profile.dart';
 import '../models/customer.dart';
@@ -6,6 +7,7 @@ import '../models/bill.dart';
 import '../models/vendor.dart';
 import '../models/purchase_bill.dart';
 import 'notification_service.dart';
+import 'data_sync_service.dart';
 
 class StorageService {
   static const String _settingsBoxName = 'settings';
@@ -43,6 +45,11 @@ class StorageService {
   }
 
   Future<void> saveBusinessProfile(BusinessProfile profile) async {
+    await _settingsBox?.put('businessProfile', profile.toMap());
+    dataSyncService.pushProfile(profile);
+  }
+
+  Future<void> saveBusinessProfileLocalOnly(BusinessProfile profile) async {
     await _settingsBox?.put('businessProfile', profile.toMap());
   }
 
@@ -85,9 +92,21 @@ class StorageService {
   Future<void> saveBill(Bill bill) async {
     await _billsBox?.put(bill.id, bill);
     await notificationService.updateDailyReminder();
+    dataSyncService.pushBill(bill);
+  }
+
+  Future<void> saveBillLocalOnly(Bill bill) async {
+    await _billsBox?.put(bill.id, bill);
+    await notificationService.updateDailyReminder();
   }
 
   Future<void> deleteBill(String id) async {
+    await _billsBox?.delete(id);
+    await notificationService.updateDailyReminder();
+    dataSyncService.deleteBill(id);
+  }
+
+  Future<void> deleteBillLocalOnly(String id) async {
     await _billsBox?.delete(id);
     await notificationService.updateDailyReminder();
   }
@@ -102,9 +121,19 @@ class StorageService {
 
   Future<void> savePurchaseBill(PurchaseBill bill) async {
     await _purchaseBillsBox?.put(bill.id, bill);
+    dataSyncService.pushPurchaseBill(bill);
+  }
+
+  Future<void> savePurchaseBillLocalOnly(PurchaseBill bill) async {
+    await _purchaseBillsBox?.put(bill.id, bill);
   }
 
   Future<void> deletePurchaseBill(String id) async {
+    await _purchaseBillsBox?.delete(id);
+    dataSyncService.deletePurchaseBill(id);
+  }
+
+  Future<void> deletePurchaseBillLocalOnly(String id) async {
     await _purchaseBillsBox?.delete(id);
   }
 
@@ -113,5 +142,18 @@ class StorageService {
     await _settingsBox?.clear();
     await _billsBox?.clear();
     await _purchaseBillsBox?.clear();
+  }
+
+  // --- Listenables for UI ---
+  ValueListenable<Box<Bill>> listenToBills() {
+    return _billsBox!.listenable();
+  }
+
+  ValueListenable<Box<PurchaseBill>> listenToPurchaseBills() {
+    return _purchaseBillsBox!.listenable();
+  }
+
+  ValueListenable<Box> listenToSettings() {
+    return _settingsBox!.listenable();
   }
 }

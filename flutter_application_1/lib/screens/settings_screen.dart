@@ -5,6 +5,9 @@ import '../main.dart';
 import '../models/business_profile.dart';
 import '../widgets/glass_container.dart';
 import '../services/notification_service.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -141,6 +144,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _buildSectionHeader('Account'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: StreamBuilder<User?>(
+                stream: authService.authStateChanges,
+                builder: (context, snapshot) {
+                  final user = snapshot.data;
+                  if (user == null) {
+                    return ListTile(
+                      leading: const Icon(Icons.account_circle, size: 40, color: Colors.grey),
+                      title: const Text('Not signed in'),
+                      subtitle: const Text('Sign in to sync your data across devices'),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                        },
+                        child: const Text('Sign In'),
+                      ),
+                    );
+                  } else {
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: user.photoURL != null ? NetworkImage(user.photoURL!) : null,
+                        child: user.photoURL == null ? const Icon(Icons.person) : null,
+                      ),
+                      title: Text(user.displayName ?? 'User'),
+                      subtitle: Text(user.email ?? ''),
+                      trailing: OutlinedButton(
+                        onPressed: () async {
+                          await authService.signOut();
+                        },
+                        child: const Text('Sign Out'),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildSectionHeader('Business Profile'),
             GlassContainer(
               padding: const EdgeInsets.all(16.0),

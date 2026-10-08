@@ -78,150 +78,162 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    final availableYears = <int>{
-      DateTime.now().year,
-      ..._bills.map((b) => b.invoiceDate.year),
-      ..._purchaseBills.map((b) => b.invoiceDate.year),
-    }.toList()..sort((a, b) => b.compareTo(a));
-
-    final months = List.generate(12, (i) {
-      final date = DateTime(2000, i + 1, 1);
-      return {'value': i + 1, 'name': DateFormat('MMMM').format(date)};
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CreateBillScreen()),
-                      );
-                      _loadData();
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('SALE'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      body: ValueListenableBuilder(
+        valueListenable: storageService.listenToBills(),
+        builder: (context, _, __) {
+          return ValueListenableBuilder(
+            valueListenable: storageService.listenToPurchaseBills(),
+            builder: (context, _, __) {
+              _bills = storageService.getBills();
+              _purchaseBills = storageService.getPurchaseBills();
+              _calculateStats();
+
+              final availableYears = <int>{
+                DateTime.now().year,
+                ..._bills.map((b) => b.invoiceDate.year),
+                ..._purchaseBills.map((b) => b.invoiceDate.year),
+              }.toList()..sort((a, b) => b.compareTo(a));
+
+              final months = List.generate(12, (i) {
+                final date = DateTime(2000, i + 1, 1);
+                return {'value': i + 1, 'name': DateFormat('MMMM').format(date)};
+              });
+
+              return RefreshIndicator(
+                onRefresh: () async => _loadData(),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const CreateBillScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.add),
+                            label: const Text('SALE'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const CreatePurchaseBillScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_cart),
+                            label: const Text('PURCHASE'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CreatePurchaseBillScreen()),
-                      );
-                      _loadData();
-                    },
-                    icon: const Icon(Icons.shopping_cart),
-                    label: const Text('PURCHASE'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GlassContainer(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _selectedMonth,
+                                items: months.map((m) {
+                                  return DropdownMenuItem<int>(
+                                    value: m['value'] as int,
+                                    child: Text(m['name'] as String),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() {
+                                      _selectedMonth = value;
+                                      _calculateStats();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GlassContainer(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _selectedYear,
+                                items: availableYears.map((year) {
+                                  return DropdownMenuItem<int>(
+                                    value: year,
+                                    child: Text(year.toString()),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() {
+                                      _selectedYear = value;
+                                      _calculateStats();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: GlassContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        isExpanded: true,
-                        value: _selectedMonth,
-                        items: months.map((m) {
-                          return DropdownMenuItem<int>(
-                            value: m['value'] as int,
-                            child: Text(m['name'] as String),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedMonth = value;
-                              _calculateStats();
-                            });
-                          }
-                        },
-                      ),
+                    const SizedBox(height: 24),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildAnalyticsCard(
+                            'Total Sales',
+                            _salesTotal,
+                            _salesPaid,
+                            _salesUnpaid,
+                            Icons.account_balance_wallet,
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildAnalyticsCard(
+                            'Total Purchases',
+                            _purchaseTotal,
+                            _purchasePaid,
+                            _purchaseUnpaid,
+                            Icons.shopping_bag,
+                            Colors.orange,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GlassContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        isExpanded: true,
-                        value: _selectedYear,
-                        items: availableYears.map((year) {
-                          return DropdownMenuItem<int>(
-                            value: year,
-                            child: Text(year.toString()),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedYear = value;
-                              _calculateStats();
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _buildAnalyticsCard(
-                    'Total Sales',
-                    _salesTotal,
-                    _salesPaid,
-                    _salesUnpaid,
-                    Icons.account_balance_wallet,
-                    Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildAnalyticsCard(
-                    'Total Purchases',
-                    _purchaseTotal,
-                    _purchasePaid,
-                    _purchaseUnpaid,
-                    Icons.shopping_bag,
-                    Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }

@@ -141,12 +141,25 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
             ),
           ),
           Expanded(
-            child: _filteredBills.isEmpty
-                ? const Center(child: Text('No bills found.'))
-                : ListView.builder(
-                    itemCount: _filteredBills.length,
+            child: ValueListenableBuilder(
+              valueListenable: storageService.listenToBills(),
+              builder: (context, _, __) {
+                // Re-fetch and re-filter bills on change
+                _bills = storageService.getBills();
+                final query = _searchCtrl.text.toLowerCase();
+                final currentFiltered = _bills.where((bill) {
+                  return bill.invoiceNumber.toLowerCase().contains(query) ||
+                      bill.customer.name.toLowerCase().contains(query);
+                }).toList();
+                
+                if (currentFiltered.isEmpty) {
+                  return const Center(child: Text('No bills found.'));
+                }
+                
+                return ListView.builder(
+                    itemCount: currentFiltered.length,
                     itemBuilder: (context, index) {
-                      final bill = _filteredBills[index];
+                      final bill = currentFiltered[index];
                       return GlassContainer(
                         margin: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -212,7 +225,9 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
                         ),
                       );
                     },
-                  ),
+                  );
+              },
+            ),
           ),
         ],
       ),
