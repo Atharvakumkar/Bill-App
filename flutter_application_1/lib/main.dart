@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'services/storage_service.dart';
+import 'services/notification_service.dart';
+import 'screens/pending_payments_screen.dart';
 
 final StorageService storageService = StorageService();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await storageService.init();
+  await notificationService.init(navigatorKey);
+  notificationService.requestPermissions();
+  await notificationService.updateDailyReminder();
   runApp(const BillMakerApp());
 }
 
@@ -16,11 +22,11 @@ class BillMakerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Shared text theme utilizing Poppins
     final poppinsTextTheme = GoogleFonts.poppinsTextTheme();
 
     return MaterialApp(
       title: 'Bill Maker',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       builder: (context, child) {
@@ -150,6 +156,9 @@ class BillMakerApp extends StatelessWidget {
         ),
       ),
       home: const HomeScreen(),
+      routes: {
+        '/pending_payments': (context) => const PendingPaymentsScreen(),
+      },
     );
   }
 }

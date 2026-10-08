@@ -5,6 +5,7 @@ import '../models/bill_item.dart';
 import '../models/bill.dart';
 import '../models/vendor.dart';
 import '../models/purchase_bill.dart';
+import 'notification_service.dart';
 
 class StorageService {
   static const String _settingsBoxName = 'settings';
@@ -29,6 +30,8 @@ class StorageService {
     _billsBox = await Hive.openBox<Bill>(_billsBoxName);
     _purchaseBillsBox = await Hive.openBox<PurchaseBill>(_purchaseBillsBoxName);
   }
+
+  Box get box => _settingsBox!;
 
   // --- Business Profile ---
   BusinessProfile getBusinessProfile() {
@@ -81,10 +84,12 @@ class StorageService {
 
   Future<void> saveBill(Bill bill) async {
     await _billsBox?.put(bill.id, bill);
+    await notificationService.updateDailyReminder();
   }
 
   Future<void> deleteBill(String id) async {
     await _billsBox?.delete(id);
+    await notificationService.updateDailyReminder();
   }
 
   // --- Purchase Bills ---

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../models/business_profile.dart';
 import '../widgets/glass_container.dart';
+import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -89,6 +90,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await storageService.saveBusinessProfile(_profile);
     await storageService.saveInvoicePrefix(_prefixCtrl.text);
     await storageService.saveNextInvoiceNumber(int.parse(_nextNoCtrl.text));
+    
+    // Update notification schedule with new settings
+    await notificationService.updateDailyReminder();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved successfully')));
@@ -181,6 +185,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildImagePickerRow(title: 'Select UPI QR', path: _profile.qrCodePath, icon: Icons.qr_code, onPick: _pickQrCode, onRemove: _removeQrCode),
                   const Divider(height: 32),
                   _buildImagePickerRow(title: 'Select Signature', path: _profile.signaturePath, icon: Icons.draw, onPick: _pickSignature, onRemove: _removeSignature),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Notification Settings'),
+            GlassContainer(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text('Daily Unpaid Reminder'),
+                    subtitle: const Text('Get notified daily about pending payments'),
+                    value: storageService.box.get('notifications_enabled', defaultValue: true),
+                    onChanged: (val) async {
+                      await storageService.box.put('notifications_enabled', val);
+                      setState(() {});
+                    },
+                  ),
+                  if (storageService.box.get('notifications_enabled', defaultValue: true))
+                    ListTile(
+                      title: const Text('Notification Time'),
+                      subtitle: Text(TimeOfDay(
+                        hour: storageService.box.get('notification_hour', defaultValue: 9),
+                        minute: storageService.box.get('notification_minute', defaultValue: 0),
+                      ).format(context)),
+                      trailing: const Icon(Icons.access_time),
+                      onTap: () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay(
+                            hour: storageService.box.get('notification_hour', defaultValue: 9),
+                            minute: storageService.box.get('notification_minute', defaultValue: 0),
+                          ),
+                        );
+                        if (time != null) {
+                          await storageService.box.put('notification_hour', time.hour);
+                          await storageService.box.put('notification_minute', time.minute);
+                          setState(() {});
+                          await notificationService.updateDailyReminder();
+                        }
+                      },
+                    ),
+
                 ],
               ),
             ),
