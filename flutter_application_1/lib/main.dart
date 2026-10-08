@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'services/storage_service.dart';
 import 'services/notification_service.dart';
+import 'services/data_sync_service.dart';
 import 'screens/pending_payments_screen.dart';
 
 final StorageService storageService = StorageService();
@@ -10,7 +13,11 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await storageService.init();
+  dataSyncService; // Trigger lazy initialization
   await notificationService.init(navigatorKey);
   notificationService.requestPermissions();
   await notificationService.updateDailyReminder();
@@ -25,7 +32,7 @@ class BillMakerApp extends StatelessWidget {
     final poppinsTextTheme = GoogleFonts.poppinsTextTheme();
 
     return MaterialApp(
-      title: 'Bill Maker',
+      title: 'Invoice Now',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
