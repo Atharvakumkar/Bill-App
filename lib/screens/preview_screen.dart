@@ -1,22 +1,25 @@
-import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
+
+import '../main.dart';
 import '../models/bill.dart';
 import '../services/pdf_service.dart';
-import '../services/storage_service.dart';
+import 'create_bill_screen.dart';
 
 class PreviewScreen extends StatefulWidget {
   final Bill bill;
 
-  const PreviewScreen({super.key, required this.bill});
+  const PreviewScreen({Key? key, required this.bill}) : super(key: key);
 
   @override
   State<PreviewScreen> createState() => _PreviewScreenState();
 }
 
 class _PreviewScreenState extends State<PreviewScreen> {
-  File? _pdfFile;
+  Uint8List? _pdfBytes;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,22 +28,21 @@ class _PreviewScreenState extends State<PreviewScreen> {
   }
 
   Future<void> _generatePdf() async {
-    final file = await PdfService.generateBillPdf(widget.bill);
-    setState(() {
-      _pdfFile = file;
-    });
-  }
-
-  Future<void> _saveBill() async {
-    await StorageService.saveBill(widget.bill);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill saved successfully!')));
-    Navigator.popUntil(context, (route) => route.isFirst);
-  }
-
-  void _sharePdf() {
-    if (_pdfFile != null) {
-      Share.shareXFiles([XFile(_pdfFile!.path)], text: 'Invoice ${widget.bill.invoiceNumber}');
+    final profile = storageService.getBusinessProfile();
+    try {
+      final bytes = await PdfService.generatePdf(widget.bill, profile);
+      setState(() {
+        _pdfBytes = bytes;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error generating PDF: $e')));
+      }
     }
   }
 
@@ -50,35 +52,43 @@ class _PreviewScreenState extends State<PreviewScreen> {
       appBar: AppBar(
         title: const Text('Bill Preview'),
         actions: [
-          if (_pdfFile != null)
+          if (_pdfBytes != null) ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Edit Bill',
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateBillScreen(existingBill: widget.bill),
+                  ),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.share),
-              onPressed: _sharePdf,
+              onPressed: () => PdfService.sharePdf(_pdfBytes!, widget.bill),
+              tooltip: 'Share',
             ),
+            IconButton(
+              icon: const Icon(Icons.print),
+              onPressed: () => PdfService.printPdf(_pdfBytes!),
+              tooltip: 'Print',
+            ),
+          ],
         ],
       ),
-      body: _pdfFile == null
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _pdfBytes == null
+          ? const Center(child: Text('Failed to generate PDF'))
           : PdfPreview(
-              build: (format) => _pdfFile!.readAsBytesSync(),
-              allowSharing: false, 
+              build: (format) => _pdfBytes!,
+              allowPrinting: true,
+              allowSharing: true,
               canChangeOrientation: false,
               canChangePageFormat: false,
-              pdfFileName: _pdfFile!.path.split('/').last,
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton.icon(
-            onPressed: _saveBill,
-            icon: const Icon(Icons.save),
-            label: const Text('SAVE BILL'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

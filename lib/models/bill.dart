@@ -15,6 +15,7 @@ class Bill {
   String paymentMethod;
   String notes;
   DateTime createdAt;
+  DateTime updatedAt;
 
   Bill({
     required this.id,
@@ -29,7 +30,44 @@ class Bill {
     required this.paymentMethod,
     this.notes = '',
     required this.createdAt,
+    required this.updatedAt,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'invoiceNumber': invoiceNumber,
+      'invoiceDate': invoiceDate.toIso8601String(),
+      'customer': customer.toMap(),
+      'items': items.map((i) => i.toMap()).toList(),
+      'subtotal': subtotal,
+      'discount': discount,
+      'grandTotal': grandTotal,
+      'paymentStatus': paymentStatus,
+      'paymentMethod': paymentMethod,
+      'notes': notes,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  factory Bill.fromMap(Map<dynamic, dynamic> map) {
+    return Bill(
+      id: map['id'] ?? '',
+      invoiceNumber: map['invoiceNumber'] ?? '',
+      invoiceDate: DateTime.tryParse(map['invoiceDate'] ?? '') ?? DateTime.now(),
+      customer: Customer.fromMap(map['customer'] ?? {}),
+      items: (map['items'] as List?)?.map((i) => BillItem.fromMap(i)).toList() ?? [],
+      subtotal: (map['subtotal'] ?? 0).toDouble(),
+      discount: (map['discount'] ?? 0).toDouble(),
+      grandTotal: (map['grandTotal'] ?? 0).toDouble(),
+      paymentStatus: map['paymentStatus'] ?? 'Unpaid',
+      paymentMethod: map['paymentMethod'] ?? 'Cash',
+      notes: map['notes'] ?? '',
+      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+    );
+  }
 }
 
 class BillAdapter extends TypeAdapter<Bill> {
@@ -38,53 +76,12 @@ class BillAdapter extends TypeAdapter<Bill> {
 
   @override
   Bill read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return Bill(
-      id: fields[0] as String,
-      invoiceNumber: fields[1] as String,
-      invoiceDate: fields[2] as DateTime,
-      customer: fields[3] as Customer,
-      items: (fields[4] as List).cast<BillItem>(),
-      subtotal: fields[5] as double,
-      discount: fields[6] as double,
-      grandTotal: fields[7] as double,
-      paymentStatus: fields[8] as String,
-      paymentMethod: fields[9] as String,
-      notes: fields[10] as String? ?? '',
-      createdAt: fields[11] as DateTime,
-    );
+    return Bill.fromMap(reader.readMap());
   }
 
   @override
   void write(BinaryWriter writer, Bill obj) {
-    writer
-      ..writeByte(12)
-      ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
-      ..write(obj.invoiceNumber)
-      ..writeByte(2)
-      ..write(obj.invoiceDate)
-      ..writeByte(3)
-      ..write(obj.customer)
-      ..writeByte(4)
-      ..write(obj.items)
-      ..writeByte(5)
-      ..write(obj.subtotal)
-      ..writeByte(6)
-      ..write(obj.discount)
-      ..writeByte(7)
-      ..write(obj.grandTotal)
-      ..writeByte(8)
-      ..write(obj.paymentStatus)
-      ..writeByte(9)
-      ..write(obj.paymentMethod)
-      ..writeByte(10)
-      ..write(obj.notes)
-      ..writeByte(11)
-      ..write(obj.createdAt);
+    writer.writeMap(obj.toMap());
   }
 }
+

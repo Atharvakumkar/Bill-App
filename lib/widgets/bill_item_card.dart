@@ -35,7 +35,7 @@ class BillItemCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.itemName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 4),
                   Text('Qty: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)} × ${CurrencyFormatter.format(item.unitPrice)}', 
                     style: TextStyle(color: Colors.grey[700], fontSize: 13)),

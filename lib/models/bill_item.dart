@@ -1,17 +1,45 @@
 import 'package:hive/hive.dart';
 
 class BillItem {
-  String itemName;
+  String id;
+  String name;
+  String description;
   double quantity;
   double unitPrice;
+  double discount;
 
   BillItem({
-    required this.itemName,
-    required this.quantity,
-    required this.unitPrice,
+    required this.id,
+    required this.name,
+    this.description = '',
+    this.quantity = 1,
+    this.unitPrice = 0,
+    this.discount = 0,
   });
 
-  double get total => quantity * unitPrice;
+  double get total => (quantity * unitPrice) - discount;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'quantity': quantity,
+      'unitPrice': unitPrice,
+      'discount': discount,
+    };
+  }
+
+  factory BillItem.fromMap(Map<dynamic, dynamic> map) {
+    return BillItem(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      description: map['description'] ?? '',
+      quantity: (map['quantity'] ?? 1).toDouble(),
+      unitPrice: (map['unitPrice'] ?? 0).toDouble(),
+      discount: (map['discount'] ?? 0).toDouble(),
+    );
+  }
 }
 
 class BillItemAdapter extends TypeAdapter<BillItem> {
@@ -20,26 +48,11 @@ class BillItemAdapter extends TypeAdapter<BillItem> {
 
   @override
   BillItem read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return BillItem(
-      itemName: fields[0] as String,
-      quantity: fields[1] as double,
-      unitPrice: fields[2] as double,
-    );
+    return BillItem.fromMap(reader.readMap());
   }
 
   @override
   void write(BinaryWriter writer, BillItem obj) {
-    writer
-      ..writeByte(3)
-      ..writeByte(0)
-      ..write(obj.itemName)
-      ..writeByte(1)
-      ..write(obj.quantity)
-      ..writeByte(2)
-      ..write(obj.unitPrice);
+    writer.writeMap(obj.toMap());
   }
 }
