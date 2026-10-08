@@ -4,9 +4,9 @@ import '../models/bill.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/glass_container.dart';
 import 'create_bill_screen.dart';
-import 'preview_screen.dart';
 import 'create_purchase_bill_screen.dart';
 import '../models/purchase_bill.dart';
+import 'package:intl/intl.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({Key? key}) : super(key: key);
@@ -17,9 +17,18 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   List<Bill> _bills = [];
-  double _totalAmount = 0;
   List<PurchaseBill> _purchaseBills = [];
-  double _totalPurchases = 0;
+  
+  int _selectedYear = DateTime.now().year;
+  int _selectedMonth = DateTime.now().month;
+
+  double _salesTotal = 0;
+  double _salesPaid = 0;
+  double _salesUnpaid = 0;
+  
+  double _purchaseTotal = 0;
+  double _purchasePaid = 0;
+  double _purchaseUnpaid = 0;
 
   @override
   void initState() {
@@ -30,19 +39,59 @@ class _DashboardViewState extends State<DashboardView> {
   void _loadData() {
     setState(() {
       _bills = storageService.getBills();
-      _totalAmount = _bills.fold(0, (sum, bill) => sum + bill.grandTotal);
       _purchaseBills = storageService.getPurchaseBills();
-      _totalPurchases = _purchaseBills.fold(0, (sum, bill) => sum + bill.totalAmount);
+      _calculateStats();
     });
+  }
+
+  void _calculateStats() {
+    _salesTotal = 0;
+    _salesPaid = 0;
+    _salesUnpaid = 0;
+    
+    _purchaseTotal = 0;
+    _purchasePaid = 0;
+    _purchaseUnpaid = 0;
+
+    for (var bill in _bills) {
+      if (bill.invoiceDate.year == _selectedYear && bill.invoiceDate.month == _selectedMonth) {
+        _salesTotal += bill.grandTotal;
+        if (bill.paymentStatus == 'Paid') {
+          _salesPaid += bill.grandTotal;
+        } else {
+          _salesUnpaid += bill.grandTotal;
+        }
+      }
+    }
+
+    for (var bill in _purchaseBills) {
+      if (bill.invoiceDate.year == _selectedYear && bill.invoiceDate.month == _selectedMonth) {
+        _purchaseTotal += bill.totalAmount;
+        if (bill.paymentStatus == 'Paid') {
+          _purchasePaid += bill.totalAmount;
+        } else {
+          _purchaseUnpaid += bill.totalAmount;
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final recentBills = _bills.take(5).toList();
+    final availableYears = <int>{
+      DateTime.now().year,
+      ..._bills.map((b) => b.invoiceDate.year),
+      ..._purchaseBills.map((b) => b.invoiceDate.year),
+    }.toList()..sort((a, b) => b.compareTo(a));
+
+    final months = List.generate(12, (i) {
+      final date = DateTime(2000, i + 1, 1);
+      return {'value': i + 1, 'name': DateFormat('MMMM').format(date)};
+    });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bill Maker'),
+        title: const Text('Dashboard'),
       ),
       body: RefreshIndicator(
         onRefresh: () async => _loadData(),
@@ -81,7 +130,6 @@ class _DashboardViewState extends State<DashboardView> {
                     icon: const Icon(Icons.shopping_cart),
                     label: const Text('PURCHASE'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
@@ -93,70 +141,92 @@ class _DashboardViewState extends State<DashboardView> {
             Row(
               children: [
                 Expanded(
-                  child: _buildSummaryCard(
-                    'Bills Created',
-                    _bills.length.toString(),
-                    Icons.receipt,
+                  child: GlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: _selectedMonth,
+                        items: months.map((m) {
+                          return DropdownMenuItem<int>(
+                            value: m['value'] as int,
+                            child: Text(m['name'] as String),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedMonth = value;
+                              _calculateStats();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: _selectedYear,
+                        items: availableYears.map((year) {
+                          return DropdownMenuItem<int>(
+                            value: year,
+                            child: Text(year.toString()),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedYear = value;
+                              _calculateStats();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildAnalyticsCard(
+                    'Total Sales',
+                    _salesTotal,
+                    _salesPaid,
+                    _salesUnpaid,
+                    Icons.account_balance_wallet,
                     Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildSummaryCard(
-                    'Total Amount',
-                    CurrencyFormatter.format(_totalAmount),
-                    Icons.account_balance_wallet,
-                    Theme.of(context).colorScheme.secondary,
+                  child: _buildAnalyticsCard(
+                    'Total Purchases',
+                    _purchaseTotal,
+                    _purchasePaid,
+                    _purchaseUnpaid,
+                    Icons.shopping_bag,
+                    Colors.orange,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-            const Text(
-              'Recent Bills',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (recentBills.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Text('No bills created yet.'),
-                ),
-              )
-            else
-              ...recentBills.map((bill) => GlassContainer(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => PreviewScreen(bill: bill)),
-                      );
-                    },
-                    child: ListTile(
-                      title: Text(bill.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(bill.customer.name),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(CurrencyFormatter.format(bill.grandTotal),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text(bill.paymentStatus,
-                              style: TextStyle(
-                                  color: bill.paymentStatus == 'Paid' ? Colors.green : Colors.red,
-                                  fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  )),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
+  Widget _buildAnalyticsCard(String title, double total, double paid, double unpaid, IconData icon, Color color) {
     return GlassContainer(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(16.0),
@@ -174,9 +244,25 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(height: 16),
           Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7), fontSize: 13)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(CurrencyFormatter.format(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          _buildStatRow('Paid', paid, Colors.green),
+          const SizedBox(height: 8),
+          _buildStatRow('Unpaid', unpaid, Colors.red),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatRow(String label, double amount, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(CurrencyFormatter.format(amount), style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+      ],
     );
   }
 }
