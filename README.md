@@ -2,7 +2,7 @@
 
 A complete offline-first Flutter mobile application for generating simple bills and invoices, now upgraded with seamless real-time cloud syncing!
 
-## 📱 Download & Install
+## Download & Install
 
 You can install the app directly on your Android device by downloading the latest release APK.
 
@@ -13,7 +13,7 @@ You can install the app directly on your Android device by downloading the lates
 
 ---
 
-## ✨ Features
+## Features
 
 - **Google Sign-In & Authentication:** Secure your business data with Firebase Auth.
 - **Real-time Cloud Sync:** Your bills and data instantly sync across all your devices using Firebase Cloud Firestore.
@@ -25,7 +25,7 @@ You can install the app directly on your Android device by downloading the lates
 - **Notifications & Reminders:** Scheduled local notifications to remind you of pending payments.
 - **Sharing & Printing:** Share PDFs directly via WhatsApp, Email, or print them directly from your phone.
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Framework:** Flutter & Dart
 - **Backend/Database:** Firebase (Auth, Firestore)
@@ -66,5 +66,5 @@ You can install the app directly on your Android device by downloading the lates
    flutter build apk --release
    ```
 
-## 🔒 Security Note
+## Security Note
 All sensitive files (`google-services.json`, `firebase_options.dart`, `firebase.json`) have been added to `.gitignore` and wiped from the Git history to prevent API leaks. When cloning this repo, please supply your own Firebase configuration files.
